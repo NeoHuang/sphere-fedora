@@ -82,8 +82,8 @@
         </tr>
         }
         <tr>
-            <td width="60%" colspan="1" class="align_left total" >Grand Total</td>
-            <td class="align_right" style=""><span class="total">@printMoney(data.context, cart.getTotalPrice)</span></td>
+            <td width="60%" colspan="1" class="align_left total"  >Grand Total</td>
+            <td class="align_right" style=""><span id="grand-total" class="total" data="@cart.getTotalPrice.getAmount.doubleValue">@printMoney(data.context, cart.getTotalPrice)</span></td>
         </tr>                
         </table>
     </div>
@@ -118,7 +118,10 @@
 </section>
 <link rel="stylesheet" href="https://43ce0697b91280cbef31-14c96824618f1f6e4d87350d0f98c98a.ssl.cf1.rackcdn.com/static/elefunds.css">
 <script src="https://43ce0697b91280cbef31-14c96824618f1f6e4d87350d0f98c98a.ssl.cf1.rackcdn.com/static/elefunds.min.js" ></script>
-<script> window.elefundsOptions = {
+<script> 
+    var total = $("#grand-total").attr('data') * 100;
+    console.log(total);
+    window.elefundsOptions = {
 
     //The view to render.
     //Values: 'module', 'socialMediaShare'
@@ -164,7 +167,7 @@
 
     //The order total to round up (in cent)
     // *Required*
-    sumExcludingDonation: 1995,
+    sumExcludingDonation: total,
 
     //A selector for the form to be submitted needs to be provided. Values required by the module will be copied here.
     //Values: any DOM selector (class, element, id)

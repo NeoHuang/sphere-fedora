@@ -2,6 +2,7 @@ package controllers;
 
 import com.google.common.base.Optional;
 import com.google.common.primitives.Ints;
+
 import controllers.actions.CartNotEmpty;
 import exceptions.DuplicateEmailException;
 import exceptions.InvalidShippingMethodException;
@@ -14,6 +15,7 @@ import io.sphere.client.model.Money;
 import io.sphere.client.model.VersionedId;
 import io.sphere.client.shop.model.CustomerName;
 import io.sphere.client.shop.model.ShippingMethod;
+import models.DonationRequest;
 import models.PaymentMethods;
 import models.ShopCart;
 import models.ShopCustomer;
@@ -28,7 +30,6 @@ import play.mvc.With;
 import services.*;
 import views.html.checkoutView;
 import views.html.signupView;
-
 import de.paymill.Paymill;
 import de.paymill.PaymillException;
 import de.paymill.model.Payment;
@@ -38,6 +39,7 @@ import de.paymill.service.TransactionService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
 import java.util.List;
 
 import static controllers.CheckoutController.CheckoutStages.*;
@@ -67,6 +69,7 @@ public class CheckoutController extends BaseController {
     public static final String CAN_GO_TO_ORDER_PREVIEW = "canGoToOrderPreview";
     private final CheckoutService checkoutService;
     private final ShippingMethodService shippingMethodService;
+    private final ElefundsService elefundsService;
 
     /**
      * The checkout process is divided into four parts. This enum provides the index number for each step.
@@ -83,10 +86,11 @@ public class CheckoutController extends BaseController {
     @Inject
     public CheckoutController(final CategoryService categoryService, final ProductService productService,
                               final CartService cartService, final CustomerService customerService,
-                              final CheckoutService checkoutService, final ShippingMethodService shippingMethodService) {
+                              final CheckoutService checkoutService, final ShippingMethodService shippingMethodService, final ElefundsService elefundsService) {
         super(categoryService, productService, cartService, customerService);
         this.checkoutService = checkoutService;
         this.shippingMethodService = shippingMethodService;
+        this.elefundsService = elefundsService;
     }
 
     /**
@@ -299,9 +303,30 @@ public class CheckoutController extends BaseController {
             });
         }
     }
-
+    private DonationRequest getDonationRequest(){
+    	final String elefunds_agree = form().bindFromRequest().field("elefunds_agree").valueOr("");
+    	final String elefunds_receivers = form().bindFromRequest().field("elefunds_receivers").valueOr("");
+    	final String elefunds_suggested_round_up = form().bindFromRequest().field("elefunds_suggested_round_up").valueOr("");
+    	final String elefunds_donation_cent = form().bindFromRequest().field("elefunds_donation_cent").valueOr("");
+    	final String elefunds_receipt = form().bindFromRequest().field("elefunds_receipt").valueOr("");
+    	final String elefunds_receiver_names = form().bindFromRequest().field("elefunds_receiver_names").valueOr("");
+    	final String elefunds_available_receivers = form().bindFromRequest().field("elefunds_available_receivers").valueOr("");
+    	DonationRequest dr = new DonationRequest();
+    	
+    	dr.setAgree(elefunds_agree.equals("true")? true: false);
+    	dr.setReceiverList(elefunds_receivers);
+    	dr.setSuggestedAmount(Integer.parseInt(elefunds_suggested_round_up));
+    	dr.setDonation(Integer.parseInt(elefunds_donation_cent));
+    	dr.setReceipt(elefunds_receipt.equals("true")? true: false);
+    	dr.setReceiverNameList(elefunds_receiver_names);
+    	dr.setAvailabelReceivers(elefunds_available_receivers);
+    	
+    	return dr;
+    }
     public F.Promise<Result> submit() {
         final String cartSnapshot = form().bindFromRequest().field("cartSnapshot").valueOr("");
+        DonationRequest dr = getDonationRequest();
+       // play.Logger.debug("elefunds_agree:" + elefunds);
         if (!cartService().canCreateOrder(cartSnapshot)) {
             flash("error", "Your cart has changed, check everything is correct");
             return badRequest(showPage(ORDER_PREVIEW_4));

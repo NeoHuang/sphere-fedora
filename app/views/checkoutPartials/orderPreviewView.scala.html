@@ -2,6 +2,7 @@
 
 <form action="@routes.CheckoutController.submit" method="post" id="checkout-form">
     <input type="hidden" name="cartSnapshot" value="@cartSnapshot">
+    <input type="hidden" name="elefunds" value="100">
     <div class="cart_table">
         <table class="data-table cart-table" id="shopping-cart-table" cellpadding="0" cellspacing="0">
             <tr>
@@ -97,14 +98,14 @@
                     </tr>
                 }
                 @if(isSet(cart.getShippingInfo)) {
-                    <tr>
+                    <tr >
                         <td width="60%" colspan="1" class="align_left" >Shipping cost</td>
                         <td class="align_right" style=""><span class="price">@cart.getShippingInfo.getPrice</span></td>
                     </tr>
                 }
-                <tr>
+                <tr id="abc">
                     <td id="lfnds-row-label"> </td>
-                    <td id="lfnds-row-value"> </td>
+                    <td class="align_right" id="lfnds-row-value"> </td>
                 </tr>
                 <tr>
                     <td width="60%" colspan="1" class="align_left total" >Grand Total</td>
@@ -165,6 +166,7 @@
     //Default: '€'
     currency: 'EUR',
 
+
     //Values: any delimiter symbol
     //Default: ','
     currencyDelimiter: ',',
@@ -176,7 +178,7 @@
     //A selector for the form to be submitted needs to be provided. Values required by the module will be copied here.
     //Values: any DOM selector (class, element, id)
     // *Required*
-    formSelector: '#donation-form',
+    formSelector: '#checkout-form',
 
     //ClientId
     // *Required*
@@ -203,5 +205,11 @@
     //The element you choose here will be cloned and appended after itself with the donation value aus content (12.00 €)
     //Helpful when it's desired to show the donation separated from the module (ie. in an order overview)
     //Values: any DOM selector (class, element, id)
-    rowValue: '#lfnds-row-value'
+    rowValue: '#lfnds-row-value',
+
+    rowContainer: '#abc',
+
+    rowContainerInline: true
+
+
 }</script>

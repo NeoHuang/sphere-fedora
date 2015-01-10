@@ -22,5 +22,6 @@ public class ProductionModule extends AbstractModule {
         bind(ShippingMethodService.class).to(ShippingMethodServiceImpl.class);
         bind(Sphere.class).toInstance(Sphere.getInstance());
         bind(SphereClient.class).toInstance(Sphere.getInstance().client());
+        bind(ElefundsService.class).to(ElefundsServiceImp.class);
     }
 }

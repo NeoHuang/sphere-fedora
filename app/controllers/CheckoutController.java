@@ -326,6 +326,7 @@ public class CheckoutController extends BaseController {
     public F.Promise<Result> submit() {
         final String cartSnapshot = form().bindFromRequest().field("cartSnapshot").valueOr("");
         DonationRequest dr = getDonationRequest();
+        elefundsService.SendDonate(dr);
        // play.Logger.debug("elefunds_agree:" + elefunds);
         if (!cartService().canCreateOrder(cartSnapshot)) {
             flash("error", "Your cart has changed, check everything is correct");

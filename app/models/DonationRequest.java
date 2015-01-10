@@ -12,6 +12,16 @@ public class DonationRequest {
 	private List<String> receiverNameList = new ArrayList<String>();
 	private List<Integer> availableReceiverIdList = new ArrayList<Integer>();
 	
+	private String foreignId;
+	
+	public String getForeignId() {
+		return foreignId;
+	}
+
+	public void setForeignId(String foreignId) {
+		this.foreignId = foreignId;
+	}
+
 	public void setAgree(boolean agree){
 		this.elefunds_agree = agree;
 	}

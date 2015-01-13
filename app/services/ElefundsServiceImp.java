@@ -36,8 +36,19 @@ public class ElefundsServiceImp implements ElefundsService {
 			json.put("grandTotal", 1000);
 			json.put("donationAmountSuggested", dr.getSuggestedAmount());
 			
+			ObjectNode donator = Json.newObject();
+			donator.put("email", dr.getEmail());
+			donator.put("firstName", dr.getFirstName());
+			donator.put("lastName", dr.getLastName());
+			donator.put("streetAddress", dr.getStreet());
+			donator.put("zip", dr.getZip());
+			donator.put("city", dr.getCity());
+			donator.put("countryCode", dr.getCountryCode());
+			donator.put("company", dr.getCompany());
+			json.put("donator", donator);
+			
 		
-		String jsonStr = json.toString();
+		String jsonStr = "[" + json.toString() + "]";
 		Promise<WS.Response> result = WS.url("https://connect.elefunds.de/donations/?clientId=1001&hashedKey=eb85fa24f23b7ade5224a036b39556d65e764653").post(jsonStr);
 		return result;
 	}

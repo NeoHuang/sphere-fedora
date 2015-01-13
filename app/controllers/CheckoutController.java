@@ -2,6 +2,7 @@ package controllers;
 
 import com.google.common.base.Optional;
 import com.google.common.primitives.Ints;
+import com.neovisionaries.i18n.CountryCode;
 
 import controllers.actions.CartNotEmpty;
 import exceptions.DuplicateEmailException;
@@ -13,6 +14,7 @@ import forms.customerForm.SignUp;
 import io.sphere.client.model.CustomObject;
 import io.sphere.client.model.Money;
 import io.sphere.client.model.VersionedId;
+import io.sphere.client.shop.model.Address;
 import io.sphere.client.shop.model.CustomerName;
 import io.sphere.client.shop.model.ShippingMethod;
 import models.DonationRequest;
@@ -23,6 +25,8 @@ import models.ShopOrder;
 import play.Logger;
 import play.i18n.Messages;
 import play.libs.F;
+import play.libs.F.Promise;
+import play.libs.WS.Response;
 import play.mvc.Content;
 import play.data.Form;
 import play.mvc.Result;
@@ -315,7 +319,13 @@ public class CheckoutController extends BaseController {
     	
     	dr.setAgree(elefunds_agree.equals("true")? true: false);
     	dr.setReceiverList(elefunds_receivers);
-    	dr.setSuggestedAmount(Integer.parseInt(elefunds_suggested_round_up));
+    	int suggestedRoundup = 0;
+    	try {
+    		suggestedRoundup = Integer.parseInt(elefunds_suggested_round_up);
+    	} catch (NumberFormatException ex){
+    		
+    	}
+    	dr.setSuggestedAmount(suggestedRoundup);
     	dr.setDonation(Integer.parseInt(elefunds_donation_cent));
     	dr.setReceipt(elefunds_receipt.equals("true")? true: false);
     	dr.setReceiverNameList(elefunds_receiver_names);
@@ -325,8 +335,7 @@ public class CheckoutController extends BaseController {
     }
     public F.Promise<Result> submit() {
         final String cartSnapshot = form().bindFromRequest().field("cartSnapshot").valueOr("");
-        DonationRequest dr = getDonationRequest();
-        elefundsService.SendDonate(dr);
+        final DonationRequest dr = getDonationRequest();
        // play.Logger.debug("elefunds_agree:" + elefunds);
         if (!cartService().canCreateOrder(cartSnapshot)) {
             flash("error", "Your cart has changed, check everything is correct");
@@ -335,13 +344,27 @@ public class CheckoutController extends BaseController {
             return cartService().fetchCurrent().flatMap(new F.Function<ShopCart, F.Promise<Result>>() {
                 @Override
                 public F.Promise<Result> apply(final ShopCart shopCart) throws Throwable {
-                    return chargeCustomer(shopCart, cartSnapshot);
+                	 
+                	 Address address =  shopCart.getBillingAddress().get();
+                	 dr.setEmail(address.getEmail());
+                	 dr.setFirstName(address.getFirstName());
+                	 dr.setLastName(address.getLastName());
+                	 dr.setStreet(address.getStreetName() + " " + address.getStreetNumber());
+                	 dr.setZip(address.getPostalCode());
+                	 dr.setCity(address.getCity());
+                	 CountryCode code = address.getCountry();
+                	 dr.setCountryCode(code.getAlpha2());
+                	 dr.setCompany(address.getCompany());
+
+                	 
+                     
+                    return chargeCustomer(shopCart, dr, cartSnapshot);
                 }
             });
         }
     }
 
-    public F.Promise<Result> chargeCustomer(final ShopCart cart, final String cartSnapshot) {
+    public F.Promise<Result> chargeCustomer(final ShopCart cart, final DonationRequest donation, final String cartSnapshot) {
         return checkoutService.getPaymentToken(cart.getId()).flatMap(new F.Function<Optional<String>, F.Promise<Result>>() {
             @Override
             public F.Promise<Result> apply(Optional<String> token) throws Throwable {
@@ -362,8 +385,21 @@ public class CheckoutController extends BaseController {
                         play.Logger.debug("Executing payment " + payment.getId() + " of " + transaction.getAmount()
                                 + " " + transaction.getCurrency() + " with token " + token);
                         transactionSrv.create(transaction);
-                        return cartService().createOrder(cart, cartSnapshot)
-                                .map(f().<Optional<ShopOrder>>redirectWithFlash(controllers.routes.HomeController.home(), "success", "Your order has been successfully created!"));
+                      //  return cartService().createOrder(cart, cartSnapshot)
+                      //          .map(f().<Optional<ShopOrder>>redirectWithFlash(controllers.routes.HomeController.home(), "success", "Your order has been successfully created!"));
+                        return cartService().createOrder(cart, cartSnapshot).
+                        		flatMap(new F.Function<Optional<ShopOrder>, F.Promise<Result>>() {
+
+									@Override
+									public F.Promise<Result> apply(Optional<ShopOrder> order)
+											throws Throwable {
+										donation.setForeignId(order.get().getId());
+										return elefundsService.SendDonate(donation).
+												map(f().<Response>redirectWithFlash(controllers.routes.HomeController.home(), "success", "Your order has been successfully created!"));
+									}
+
+									
+						});
 
                     } catch (PaymillException pe) {
                         throw new RuntimeException("Payment failed unexpectedly", pe);

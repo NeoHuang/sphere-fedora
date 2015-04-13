@@ -26,10 +26,12 @@ import play.Logger;
 import play.i18n.Messages;
 import play.libs.F;
 import play.libs.F.Promise;
+import play.libs.WS;
 import play.libs.WS.Response;
 import play.mvc.Content;
 import play.data.Form;
 import play.mvc.Result;
+import play.mvc.Results;
 import play.mvc.With;
 import services.*;
 import views.html.checkoutView;
@@ -335,6 +337,7 @@ public class CheckoutController extends BaseController {
     }
     public F.Promise<Result> submit() {
         final String cartSnapshot = form().bindFromRequest().field("cartSnapshot").valueOr("");
+        String elefunds_agree = form().bindFromRequest().field("elefunds_agree").valueOr("");
         final DonationRequest dr = getDonationRequest();
        // play.Logger.debug("elefunds_agree:" + elefunds);
         if (!cartService().canCreateOrder(cartSnapshot)) {
@@ -396,6 +399,15 @@ public class CheckoutController extends BaseController {
 										donation.setForeignId(order.get().getId());
 										return elefundsService.SendDonate(donation).
 												map(f().<Response>redirectWithFlash(controllers.routes.HomeController.home(), "success", "Your order has been successfully created!"));
+//												map(new F.Function<WS.Response, Result>() {
+//													@Override
+//													public Result apply(WS.Response response){
+//														int status = response.getStatus();
+//														return Results.redirect(controllers.routes.HomeController.home());
+//														//return f().<Response>redirectWithFlash(, "success", "Your order has been successfully created!");
+//													}
+//													
+//												});
 									}
 
 									

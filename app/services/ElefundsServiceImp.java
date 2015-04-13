@@ -28,7 +28,7 @@ public class ElefundsServiceImp implements ElefundsService {
 		
 			json.put("foreignId", dr.getForeignId());
 			String thisMoment = String.format("%tFT%<tRZ",
-                    Calendar.getInstance(TimeZone.getTimeZone("Z")));
+                    Calendar.getInstance(TimeZone.getDefault()));
 			json.put("donationTimestamp", thisMoment);
 			json.put("donationAmount", dr.getDonation());
 			json.put("receivers", Json.toJson(dr.getReceiverIdList()));

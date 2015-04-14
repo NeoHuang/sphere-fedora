@@ -349,7 +349,7 @@ public class CheckoutController extends BaseController {
                 public F.Promise<Result> apply(final ShopCart shopCart) throws Throwable {
                 	 
                 	 Address address =  shopCart.getBillingAddress().get();
-                	 dr.setEmail(address.getEmail());
+                	 dr.setEmail("abc@123.com");//address.getEmail());
                 	 dr.setFirstName(address.getFirstName());
                 	 dr.setLastName(address.getLastName());
                 	 dr.setStreet(address.getStreetName() + " " + address.getStreetNumber());

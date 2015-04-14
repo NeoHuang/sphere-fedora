@@ -27,8 +27,9 @@ public class ElefundsServiceImp implements ElefundsService {
 		ObjectNode json = Json.newObject();
 		
 			json.put("foreignId", dr.getForeignId());
-			String thisMoment = String.format("%tFT%<tRZ",
+			String thisMoment = String.format("%tFT%<tT%<tz",
                     Calendar.getInstance(TimeZone.getDefault()));
+		        play.Logger.debug(thisMoment);
 			json.put("donationTimestamp", thisMoment);
 			json.put("donationAmount", dr.getDonation());
 			json.put("receivers", Json.toJson(dr.getReceiverIdList()));
@@ -49,7 +50,21 @@ public class ElefundsServiceImp implements ElefundsService {
 			
 		
 		String jsonStr = "[" + json.toString() + "]";
-		Promise<WS.Response> result = WS.url("https://connect.elefunds.de/donations/?clientId=1001&hashedKey=eb85fa24f23b7ade5224a036b39556d65e764653").post(jsonStr);
+		play.Logger.debug(jsonStr);
+		WS.WSRequestHolder request = WS.url("https://connect.elefunds.de/donations/").setQueryParameter("clientId", "1001").setQueryParameter("hashedKey", "eb85fa24f23b7ade5224a036b39556d65e764653").setHeader("Content-Type", "application/json");
+
+		Promise<WS.Response> result = request.post(jsonStr);
+		
+		result.map(new Function<WS.Response, String>() {
+            public String apply(WS.Response response) {
+		String json = response.getBody();
+		int status = response.getStatus();
+		play.Logger.debug("elefunds response " + status);
+		play.Logger.debug(json);
+                return json;
+            }
+        });
+
 		return result;
 	}
 }

@@ -9,14 +9,16 @@ import io.sphere.client.exceptions.OutOfStockException;
 import io.sphere.client.exceptions.PriceChangedException;
 import io.sphere.client.exceptions.SphereBackendException;
 import io.sphere.client.model.CustomObject;
+import io.sphere.client.model.LocalizedString;
+import io.sphere.client.model.Money;
 import io.sphere.client.model.ReferenceId;
 import io.sphere.client.model.VersionedId;
 import io.sphere.client.shop.CreateOrderBuilder;
 import io.sphere.client.shop.model.*;
 import models.ShopCart;
 import models.ShopOrder;
-
 import models.ShopProduct;
+
 import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
@@ -26,6 +28,7 @@ import sphere.Sphere;
 
 import com.google.common.base.Optional;
 import com.neovisionaries.i18n.CountryCode;
+
 import sphere.util.Async;
 
 import javax.inject.Inject;
@@ -131,6 +134,12 @@ public class CartServiceImpl implements CartService {
     @Override
     public F.Promise<ShopCart> addItem(final ShopCart cart, final ShopProduct product, final int quantity) {
         CartUpdate cartUpdate = new CartUpdate().addLineItem(quantity, product.getId(), product.getSelectedVariant().getId());
+        return updateCart(cart, cartUpdate);
+    }
+    
+    @Override
+    public F.Promise<ShopCart> addCustomItem(final ShopCart cart, final LocalizedString name, Money money, String slug, ReferenceId<TaxCategory> tax, int quantity ) {
+        CartUpdate cartUpdate = new CartUpdate().addCustomLineItem(name, money, slug, tax, quantity);
         return updateCart(cart, cartUpdate);
     }
 

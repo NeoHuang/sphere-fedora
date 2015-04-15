@@ -8,6 +8,7 @@ import javax.inject.Singleton;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import play.Play;
 import play.libs.F.Function;
 import play.libs.F.Promise;
 import play.libs.WS;
@@ -51,7 +52,9 @@ public class ElefundsServiceImp implements ElefundsService {
 		
 		String jsonStr = "[" + json.toString() + "]";
 		play.Logger.debug(jsonStr);
-		WS.WSRequestHolder request = WS.url("https://connect.elefunds.de/donations/").setQueryParameter("clientId", "1001").setQueryParameter("hashedKey", "eb85fa24f23b7ade5224a036b39556d65e764653").setHeader("Content-Type", "application/json");
+		String eleID = Play.application().configuration().getString("elefunds.id");
+		String eleKey = Play.application().configuration().getString("elefunds.key");
+		WS.WSRequestHolder request = WS.url("https://connect.elefunds.de/donations/").setQueryParameter("clientId", eleID).setQueryParameter("hashedKey", eleKey).setHeader("Content-Type", "application/json");
 
 		Promise<WS.Response> result = request.post(jsonStr);
 		

@@ -8,10 +8,13 @@ import play.libs.F;
 import com.google.common.base.Optional;
 import com.neovisionaries.i18n.CountryCode;
 
+import io.sphere.client.model.LocalizedString;
+import io.sphere.client.model.Money;
 import io.sphere.client.model.ReferenceId;
 import io.sphere.client.model.VersionedId;
 import io.sphere.client.shop.model.Address;
 import io.sphere.client.shop.model.ShippingMethod;
+import io.sphere.client.shop.model.TaxCategory;
 
 /**
  * Provides an interface to communicate with the Sphere platform to manage carts.
@@ -87,6 +90,7 @@ public interface CartService {
      */
     F.Promise<ShopCart> addItem(ShopCart cart, ShopProduct product, int quantity);
 
+    F.Promise<ShopCart> addCustomItem(final ShopCart cart, final LocalizedString name, Money money, String slug, ReferenceId<TaxCategory> tax, int quantity );
     /**
      * Updates the quantity of the provided line item in the cart.
      * @param cart the cart to be updated.
@@ -96,6 +100,7 @@ public interface CartService {
      */
     F.Promise<ShopCart> updateItem(ShopCart cart, String lineItemId, int quantity);
 
+    
     /**
      * Removes the provided line item from the cart.
      * @param cart the cart to be updated.

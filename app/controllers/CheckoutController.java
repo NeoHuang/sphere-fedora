@@ -310,13 +310,27 @@ public class CheckoutController extends BaseController {
         }
     }
     private DonationRequest getDonationRequest(){
-    	final String elefunds_agree = form().bindFromRequest().field("elefunds_agree").valueOr("");
-    	final String elefunds_receivers = form().bindFromRequest().field("elefunds_receivers").valueOr("");
-    	final String elefunds_suggested_round_up = form().bindFromRequest().field("elefunds_suggested_round_up").valueOr("");
-    	final String elefunds_donation_cent = form().bindFromRequest().field("elefunds_donation_cent").valueOr("");
-    	final String elefunds_receipt = form().bindFromRequest().field("elefunds_receipt").valueOr("");
-    	final String elefunds_receiver_names = form().bindFromRequest().field("elefunds_receiver_names").valueOr("");
-    	final String elefunds_available_receivers = form().bindFromRequest().field("elefunds_available_receivers").valueOr("");
+    	String elefunds_agree = "false";
+    	String elefunds_receivers = "";
+    	String elefunds_suggested_round_up = "";
+    	String elefunds_donation_cent = "";
+    	String elefunds_receipt = "";
+    	String elefunds_receiver_names = "";
+    	String elefunds_available_receivers = "";
+    	if (form().bindFromRequest().field("elefunds_agree") != null)
+    		elefunds_agree = form().bindFromRequest().field("elefunds_agree").valueOr("");
+    	if (form().bindFromRequest().field("elefunds_receivers") != null)
+    		elefunds_receivers = form().bindFromRequest().field("elefunds_receivers").valueOr("");
+    	if (form().bindFromRequest().field("elefunds_suggested_round_up") != null)
+    		elefunds_suggested_round_up = form().bindFromRequest().field("elefunds_suggested_round_up").valueOr("");
+    	if (form().bindFromRequest().field("elefunds_donation_cent") != null)
+    		elefunds_donation_cent = form().bindFromRequest().field("elefunds_donation_cent").valueOr("");
+    	if (form().bindFromRequest().field("elefunds_receipt") != null)
+    		elefunds_receipt = form().bindFromRequest().field("elefunds_receipt").valueOr("");
+    	if (form().bindFromRequest().field("elefunds_receiver_names") != null)
+    		elefunds_receiver_names = form().bindFromRequest().field("elefunds_receiver_names").valueOr("");
+    	if (form().bindFromRequest().field("elefunds_available_receivers") != null)
+    		elefunds_available_receivers = form().bindFromRequest().field("elefunds_available_receivers").valueOr("");
     	DonationRequest dr = new DonationRequest();
     	
     	dr.setAgree(elefunds_agree.equals("true")? true: false);
@@ -337,7 +351,6 @@ public class CheckoutController extends BaseController {
     }
     public F.Promise<Result> submit() {
         final String cartSnapshot = form().bindFromRequest().field("cartSnapshot").valueOr("");
-        String elefunds_agree = form().bindFromRequest().field("elefunds_agree").valueOr("");
         final DonationRequest dr = getDonationRequest();
        // play.Logger.debug("elefunds_agree:" + elefunds);
         if (!cartService().canCreateOrder(cartSnapshot)) {
@@ -348,8 +361,9 @@ public class CheckoutController extends BaseController {
                 @Override
                 public F.Promise<Result> apply(final ShopCart shopCart) throws Throwable {
                 	 
-                	 Address address =  shopCart.getBillingAddress().get();
-                	 dr.setEmail("abc@123.com");//address.getEmail());
+                	 Address address =  shopCart.getShippingAddress().get();
+                	 play.Logger.debug(address.getEmail());
+                	 dr.setEmail(address.getEmail());
                 	 dr.setFirstName(address.getFirstName());
                 	 dr.setLastName(address.getLastName());
                 	 dr.setStreet(address.getStreetName() + " " + address.getStreetNumber());
@@ -390,28 +404,38 @@ public class CheckoutController extends BaseController {
                         transactionSrv.create(transaction);
                       //  return cartService().createOrder(cart, cartSnapshot)
                       //          .map(f().<Optional<ShopOrder>>redirectWithFlash(controllers.routes.HomeController.home(), "success", "Your order has been successfully created!"));
-                        return cartService().createOrder(cart, cartSnapshot).
-                        		flatMap(new F.Function<Optional<ShopOrder>, F.Promise<Result>>() {
+                        if (donation.getAgree()){
+                        	 return cartService().createOrder(cart, cartSnapshot).
+                             		flatMap(new F.Function<Optional<ShopOrder>, F.Promise<Result>>() {
 
-									@Override
-									public F.Promise<Result> apply(Optional<ShopOrder> order)
-											throws Throwable {
-										donation.setForeignId(order.get().getId());
-										return elefundsService.SendDonate(donation).
-												map(f().<Response>redirectWithFlash(controllers.routes.HomeController.home(), "success", "Your order has been successfully created!"));
-//												map(new F.Function<WS.Response, Result>() {
-//													@Override
-//													public Result apply(WS.Response response){
-//														int status = response.getStatus();
-//														return Results.redirect(controllers.routes.HomeController.home());
-//														//return f().<Response>redirectWithFlash(, "success", "Your order has been successfully created!");
-//													}
-//													
-//												});
-									}
+     									@Override
+     									public F.Promise<Result> apply(Optional<ShopOrder> order)
+     											throws Throwable {
+     										
+     											donation.setForeignId(order.get().getId());
+     											return elefundsService.SendDonate(donation).
+     													map(f().<Response>redirectWithFlash(controllers.routes.HomeController.home(), "success", "Your order has been successfully created!"));
+     										
+     										
+//     												map(new F.Function<WS.Response, Result>() {
+//     													@Override
+//     													public Result apply(WS.Response response){
+//     														int status = response.getStatus();
+//     														return Results.redirect(controllers.routes.HomeController.home());
+//     														//return f().<Response>redirectWithFlash(, "success", "Your order has been successfully created!");
+//     													}
+//     													
+//     												});
+     									}
 
-									
-						});
+     									
+     						});
+                        }
+                        else {
+                        	 return cartService().createOrder(cart, cartSnapshot)
+                                     .map(f().<Optional<ShopOrder>>redirectWithFlash(controllers.routes.HomeController.home(), "success", "Your order has been successfully created!"));
+                        }
+                       
 
                     } catch (PaymillException pe) {
                         throw new RuntimeException("Payment failed unexpectedly", pe);
